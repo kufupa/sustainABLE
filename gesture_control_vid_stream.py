@@ -72,7 +72,7 @@ def receive_video_stream(host, port):
 
 def main():
     s = serial.Serial("COM3")
-    get_frame = receive_video_stream('192.168.1.2', 9999)  # Replace with the sender's IP address
+    get_frame = receive_video_stream('146.169.255.54', 9999)  # Replace with the sender's IP address
 
     hand_model = initialise_hand_detector()
     while True:
