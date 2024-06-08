@@ -3,39 +3,40 @@ import socket
 import pickle
 import struct
 
-def send_video(host, port=9999):
+def send_video_stream(host, port):
     # Create a socket object
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((host, port))
-    connection = client_socket.makefile('wb')
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((host, port))
+    server_socket.listen(5)
+    print('Server listening on {}:{}'.format(host, port))
 
-    # Open the webcam
-    cam = cv2.VideoCapture(0)
+    conn, addr = server_socket.accept()
+    print('Connection from:', addr)
+
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
     try:
-        while cam.isOpened():
-            ret, frame = cam.read()
+        while cap.isOpened():
+            ret, frame = cap.read()
             if not ret:
                 break
 
-            # Serialize the frame
             data = pickle.dumps(frame)
-            # Pack the frame size first, then the frame data
             message = struct.pack("Q", len(data)) + data
+            conn.sendall(message)
 
-            # Send the frame
-            client_socket.sendall(message)
-
-            # Display the frame locally
             cv2.imshow('Sending Video', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     except KeyboardInterrupt:
         pass
     finally:
-        cam.release()
-        client_socket.close()
+        cap.release()
+        conn.close()
+        server_socket.close()
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    send_video('192.168.1.2', 9999)  # Replace with the receiver's IP address and port
+    send_video_stream('0.0.0.0', 9999)  # Use '0.0.0.0' to listen on all available interfaces
