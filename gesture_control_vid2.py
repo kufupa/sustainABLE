@@ -14,8 +14,8 @@ def send_video_stream(host, port):
     print('Connection from:', addr)
 
     cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Set width to 640
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)  # Set height to 480
 
     try:
         while cap.isOpened():
@@ -23,11 +23,13 @@ def send_video_stream(host, port):
             if not ret:
                 break
 
+            # Compress the frame using JPEG
+            result, frame = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
             data = pickle.dumps(frame)
             message = struct.pack("Q", len(data)) + data
             conn.sendall(message)
 
-            cv2.imshow('Sending Video', frame)
+            cv2.imshow('Sending Video', cv2.imdecode(frame, cv2.IMREAD_COLOR))
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     except KeyboardInterrupt:
